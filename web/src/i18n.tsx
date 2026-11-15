@@ -1,0 +1,158 @@
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+
+export type Language = 'zh' | 'en';
+const STORAGE_KEY = 'authinbox.language';
+const chinese: Record<string, string> = {
+  "Private Mail Console": "私人邮件控制台",
+  "Inbox": "收件箱",
+  "API Keys": "API 密钥",
+  "Users & Access": "用户与权限",
+  "Sign out": "退出登录",
+  "Unable to reach the server": "暂时无法连接服务器",
+  "Enter a username and password": "请输入用户名和密码",
+  "Password needs at least 8 characters": "密码至少需要 8 个字符",
+  "Sign in failed": "登录失败",
+  "Create the admin account": "创建管理员账号",
+  "This inbox has no users yet. The first account becomes the admin.": "尚未创建用户，首个账号将成为管理员。",
+  "Sign in to read your verification mail.": "登录以查看你的验证邮件。",
+  "Username": "用户名",
+  "Password": "密码",
+  "At least 8 characters.": "至少 8 个字符。",
+  "Signing in…": "正在登录…",
+  "Create admin and sign in": "创建管理员并登录",
+  "Sign in": "登录",
+  "Unable to load keys": "无法加载密钥",
+  "Unable to create key": "无法创建密钥",
+  "Key revoked": "密钥已撤销",
+  "Unable to revoke key": "无法撤销密钥",
+  "{label} copied": "已复制{label}",
+  "Keys let MCP clients read mail as you, with the same access you have here.": "MCP 客户端通过密钥，以你的身份和现有权限读取邮件。",
+  "Key name, e.g. claude-code": "密钥名称，例如 claude-code",
+  "Create key": "创建密钥",
+  "Copy this key now. It won't be shown again.": "请立即复制并保存此密钥，之后将无法再次查看。",
+  "Key": "密钥",
+  "Copy": "复制",
+  "Name": "名称",
+  "Created": "创建时间",
+  "Last used": "上次使用",
+  "Loading…": "加载中…",
+  "No keys yet. Create one to connect an MCP client.": "暂无密钥，创建后即可连接 MCP 客户端。",
+  "Connect an MCP client": "连接 MCP 客户端",
+  "The server exposes list_addresses, list_codes, get_latest_code, and wait_for_code.": "支持 list_addresses、list_codes、get_latest_code 和 wait_for_code 工具。",
+  "Server URL": "服务地址",
+  "Authenticate with the Authorization header, value \"Bearer\" plus your key. Revoking a key here cuts that client off immediately.": "使用 Authorization 请求头，值为 Bearer 加密钥。在此撤销密钥后，对应客户端将立即失去访问权限。",
+  "Code": "验证码",
+  "Link": "链接",
+  "Copy {label}": "复制{label}",
+  "Category:": "分类：",
+  "Topic:": "主题：",
+  "Code:": "验证码：",
+  "Link:": "链接：",
+  "Mail List": "邮件列表",
+  "{total} entries · page {page} / {pages}": "共 {total} 封 · 第 {page} / {pages} 页",
+  "Filter by sender, e.g. netflix": "按发件人筛选，例如 netflix",
+  "Refresh": "刷新",
+  "From": "发件人",
+  "To": "收件人",
+  "Category": "分类",
+  "Time": "时间",
+  "No mail matches \"{search}\".": "没有与“{search}”匹配的邮件。",
+  "No extracted mails yet.": "暂无已提取的邮件。",
+  "No mail is visible to your account yet. Ask your admin to grant access.": "目前没有你可查看的邮件，请联系管理员授权。",
+  "Previous": "上一页",
+  "Next": "下一页",
+  "Back to list": "返回列表",
+  "Mail Detail": "邮件详情",
+  "Select one row from the list to inspect details.": "选择一封邮件查看详情。",
+  "From:": "发件人：",
+  "To:": "收件人：",
+  "Subject:": "邮件标题：",
+  "Received:": "接收时间：",
+  "Extracted": "提取结果",
+  "Raw Email": "原始邮件",
+  "Rendered": "邮件预览",
+  "No raw email payload saved.": "未保存原始邮件内容。",
+  "HTML is sanitized before preview and loaded in a sandboxed iframe.": "预览前会清洗 HTML，并在沙箱内显示。",
+  "Hide remote images": "隐藏远程图片",
+  "No renderable body found for this email.": "这封邮件没有可预览的正文。",
+  "You see the extracted fields. The original message is only visible to admins.": "你可以查看提取结果，原始邮件仅管理员可见。",
+  "No details loaded.": "尚未加载详情。",
+  "Unable to load mail list.": "无法加载邮件列表。",
+  "Unable to load mail details.": "无法加载邮件详情。",
+  "Unable to load admin data": "无法加载管理数据",
+  "Username and a password of at least 8 characters are required": "请输入用户名和至少 8 个字符的密码",
+  "User {name} created": "用户 {name} 已创建",
+  "Unable to create user": "无法创建用户",
+  "Delete user {name}? Their grants and API keys go with them.": "删除用户 {name}？其授权和 API 密钥也将一并删除。",
+  "User {name} deleted": "用户 {name} 已删除",
+  "Unable to delete user": "无法删除用户",
+  "Pick a user, an address pattern, and at least one category": "请选择用户、填写地址规则，并至少选择一个分类",
+  "Grant created": "授权已创建",
+  "Unable to create grant": "无法创建授权",
+  "Grant removed": "授权已移除",
+  "Unable to remove grant": "无法移除授权",
+  "Users": "用户",
+  "Admins see everything. Users only see what you grant below.": "管理员可查看全部邮件，普通用户仅能查看下方授权范围内的邮件。",
+  "Create user": "创建用户",
+  "User": "用户",
+  "Role": "角色",
+  "(you)": "（你）",
+  "Access Grants": "访问授权",
+  "A grant is one user, one address pattern, and the categories they may read there.": "每条授权指定一个用户、一个邮箱地址规则，以及允许查看的邮件分类。",
+  "Select a user": "选择用户",
+  "Address pattern": "邮箱地址规则",
+  "netflix@mail.example.com or *@mail.example.com": "例如 netflix@mail.example.com 或 *@mail.example.com",
+  "Visible categories": "可查看的分类",
+  "Password reset and account security mail can take over the account behind an address. Without this confirmation the server drops those categories from the grant.": "密码重置及账户安全邮件可能用于接管关联账号。未勾选确认时，服务端会从授权中排除这些分类。",
+  "Create grant": "创建授权",
+  "Pattern": "地址规则",
+  "Categories": "分类",
+  "No grants yet. Users see nothing until you create one.": "暂无授权，普通用户须获授权后才能查看邮件。",
+  "sensitive allowed": "允许敏感邮件",
+  "Login code": "登录验证码",
+  "Registration": "注册验证",
+  "Password reset": "密码重置",
+  "Account security": "账户安全",
+  "Payment": "付款通知",
+  "Other": "其他",
+  "Legacy": "历史分类",
+  "Administrator": "管理员",
+  "Regular user": "普通用户",
+  "Unauthorized": "登录已失效，请重新登录",
+  "Forbidden": "没有访问权限",
+  "Invalid credentials": "用户名或密码不正确",
+  "username and password required": "请输入用户名和密码",
+  "username and password (min 8 chars) required": "请输入用户名和至少 8 个字符的密码",
+  "Username already exists": "用户名已存在",
+  "Cannot delete yourself": "不能删除当前登录用户",
+  "Setup already completed": "管理员初始化已完成",
+  "Mail not found": "邮件不存在",
+  "Too many login attempts. Please retry in one minute.": "登录尝试过于频繁，请在一分钟后重试。",
+  "userId, addressPattern, allowedCategories required": "请选择用户、填写地址规则并选择分类",
+  "Too many login attempts": "登录尝试过于频繁，请稍后重试",
+  "Login temporarily unavailable": "登录暂时不可用，请稍后重试",
+  "Failed to fetch": "网络连接失败，请稍后重试"
+};
+
+export function translate(language: Language, text: string, values: Record<string, string | number> = {}): string {
+	const template = language === 'zh' ? chinese[text] ?? text : text;
+	return template.replace(/\{(\w+)\}/g, (match, key: string) => Object.prototype.hasOwnProperty.call(values, key) ? String(values[key]) : match);
+}
+function initialLanguage(): Language {
+	try {
+		const saved = localStorage.getItem(STORAGE_KEY);
+		if (saved === 'zh' || saved === 'en') return saved;
+	} catch { /* Language switching also works when storage is unavailable. */ }
+	return navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+}
+const LanguageContext = createContext({ language: 'en' as Language, setLanguage: (_language: Language) => {}, t: (text: string, values?: Record<string, string | number>) => translate('en', text, values) });
+export function LanguageProvider({ children }: { children: ReactNode }): JSX.Element {
+	const [language, setLanguage] = useState<Language>(initialLanguage);
+	useEffect(() => {
+		document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
+		try { localStorage.setItem(STORAGE_KEY, language); } catch { /* Keep the current choice in memory. */ }
+	}, [language]);
+	const value = useMemo(() => ({ language, setLanguage, t: (text: string, values?: Record<string, string | number>) => translate(language, text, values) }), [language]);
+	return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
+}
+export const useLanguage = () => useContext(LanguageContext);
